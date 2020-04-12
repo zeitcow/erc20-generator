@@ -35,4 +35,5 @@ module.exports = {
   compilers: {
     solc: useSolcNightly ? solcNightly : solcStable,
   },
+  plugins: ['solidity-coverage'],
 };
