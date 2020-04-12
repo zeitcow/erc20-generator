@@ -2,6 +2,7 @@ const { BN, constants, expectEvent, expectRevert } = require('@openzeppelin/test
 const { ZERO_ADDRESS } = constants;
 
 const { shouldBehaveLikeTokenRecover } = require('eth-token-recover/test/TokenRecover.behaviour');
+const { shouldBehaveLikeERC1363 } = require('erc-payable-token/test/token/ERC1363/ERC1363.behaviour');
 
 const { shouldBehaveLikeERC20 } = require('./ERC20.behaviour');
 const { shouldBehaveLikeERC20Detailed } = require('./ERC20Detailed.behaviour');
@@ -36,6 +37,10 @@ function shouldBehaveLikeBaseToken (
       await this.token.addMinter(minter, { from: owner });
     });
     shouldBehaveLikeERC20([owner, anotherAccount, recipient], _initialSupply);
+  });
+
+  context('like a ERC1363', function () {
+    shouldBehaveLikeERC1363([owner, anotherAccount, recipient], _initialSupply);
   });
 
   context('BaseToken token behaviours', function () {

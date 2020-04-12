@@ -1,7 +1,6 @@
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 
 const { shouldBehaveLikeBaseToken } = require('./token/ERC20/behaviours/BaseToken.behaviour');
-const { shouldBehaveLikeERC1363 } = require('erc-payable-token/test/token/ERC1363/ERC1363.behaviour');
 
 const BaseToken = artifacts.require('BaseToken');
 
@@ -55,41 +54,41 @@ contract('BaseToken', function ([owner, anotherAccount, minter, operator, recipi
           });
         });
       });
+
+      describe('with transfer enabled during deploy', function () {
+        beforeEach(async function () {
+          this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, true, { from: owner });
+        });
+
+        it('transferEnabled should be true', async function () {
+          (await this.token.transferEnabled()).should.be.equal(true);
+        });
+      });
+
+      describe('with transfer not enabled during deploy', function () {
+        beforeEach(async function () {
+          this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, false, { from: owner });
+        });
+
+        it('transferEnabled should be false', async function () {
+          (await this.token.transferEnabled()).should.be.equal(false);
+        });
+      });
     });
-  });
-
-  context('like a BaseERC1363Token', function () {
-    beforeEach(async function () {
-      this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, false, { from: owner });
-    });
-
-    shouldBehaveLikeBaseToken(
-      [owner, anotherAccount, minter, operator, recipient, thirdParty],
-      [_name, _symbol, _decimals, _cap, _initialSupply],
-    );
-  });
-
-  context('like a ERC1363', function () {
-    beforeEach(async function () {
-      this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, false, { from: owner });
-    });
-
-    shouldBehaveLikeERC1363([owner, anotherAccount, recipient], _initialSupply);
   });
 
   context('like a BaseToken', function () {
     beforeEach(async function () {
-      this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, true, { from: owner });
+      this.token = await BaseToken.new(_name, _symbol, _decimals, _cap, _initialSupply, false, { from: owner });
     });
 
     it('should have a builtOn value', async function () {
       (await this.token.builtOn()).should.be.equal(_builtOn);
     });
 
-    describe('with transfer enabled during deploy', function () {
-      it('transferEnabled should be true', async function () {
-        (await this.token.transferEnabled()).should.be.equal(true);
-      });
-    });
+    shouldBehaveLikeBaseToken(
+      [owner, anotherAccount, minter, operator, recipient, thirdParty],
+      [_name, _symbol, _decimals, _cap, _initialSupply],
+    );
   });
 });
