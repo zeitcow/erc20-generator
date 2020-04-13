@@ -11,4 +11,8 @@ contract RolesMock is Roles {
     function setupRole(bytes32 roleId, address account) public {
         _setupRole(roleId, account);
     }
+
+    function onlyMINTERMock() public view onlyMinter {} // solhint-disable-line no-empty-blocks
+
+    function onlyOPERATORMock() public view onlyOperator {} // solhint-disable-line no-empty-blocks
 }
