@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.0;
 
 import "erc-payable-token/contracts/token/ERC1363/IERC1363Spender.sol";
 

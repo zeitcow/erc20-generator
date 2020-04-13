@@ -1,7 +1,19 @@
 const { BN, constants, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { ZERO_ADDRESS } = constants;
 
-function shouldBehaveLikeERC20 ([owner, recipient, anotherAccount], initialBalance) {
+function shouldBehaveLikeERC20 (_name, _symbol, _decimals, [owner, recipient, anotherAccount], initialBalance) {
+  it('has a name', async function () {
+    (await this.token.name()).should.be.equal(_name);
+  });
+
+  it('has a symbol', async function () {
+    (await this.token.symbol()).should.be.equal(_symbol);
+  });
+
+  it('has an amount of decimals', async function () {
+    (await this.token.decimals()).should.be.bignumber.equal(_decimals);
+  });
+
   describe('total supply', function () {
     it('returns the total amount of tokens', async function () {
       (await this.token.totalSupply()).should.be.bignumber.equal(initialBalance);

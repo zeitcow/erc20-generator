@@ -1,19 +1,17 @@
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Capped.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
 import "erc-payable-token/contracts/token/ERC1363/ERC1363.sol";
 import "eth-token-recover/contracts/TokenRecover.sol";
-import "./access/roles/MinterRole.sol";
-import "./access/roles/OperatorRole.sol";
+import "./access/Roles.sol";
 
 /**
  * @title BaseToken
  * @author Vittorio Minacori (https://github.com/vittominacori)
  * @dev Implementation of the BaseToken
  */
-contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, MinterRole, OperatorRole, TokenRecover {
+contract BaseToken is ERC20Capped, ERC20Burnable, ERC1363, Roles, TokenRecover {
 
     event MintFinished();
     event TransferEnabled();
@@ -38,7 +36,7 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @dev Tokens can be moved only after if transfer enabled or if you are an approved operator.
      */
     modifier canTransfer(address from) {
-        require(_transferEnabled || isOperator(from));
+        require(_transferEnabled || hasRole(OPERATOR_ROLE, from));
         _;
     }
 
@@ -59,9 +57,11 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
         bool transferEnabled
     )
         public
-        ERC20Detailed(name, symbol, decimals)
         ERC20Capped(cap)
+        ERC1363(name, symbol)
     {
+        _setupDecimals(decimals);
+
         if (initialSupply > 0) {
             _mint(owner(), initialSupply);
         }
@@ -100,7 +100,7 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @param value The amount to be transferred.
      * @return A boolean that indicates if the operation was successful.
      */
-    function transfer(address to, uint256 value) public virtual override(ERC20, IERC20) canTransfer(_msgSender()) returns (bool) {
+    function transfer(address to, uint256 value) public virtual override(ERC20) canTransfer(_msgSender()) returns (bool) {
         return super.transfer(to, value);
     }
 
@@ -111,14 +111,14 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @param value uint256 the amount of tokens to be transferred
      * @return A boolean that indicates if the operation was successful.
      */
-    function transferFrom(address from, address to, uint256 value) public virtual override(ERC20, IERC20) canTransfer(from) returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public virtual override(ERC20) canTransfer(from) returns (bool) {
         return super.transferFrom(from, to, value);
     }
 
     /**
      * @dev Function to stop minting new tokens.
      */
-    function finishMinting() public onlyOwner canMint {
+    function finishMinting() public canMint onlyOwner {
         _mintingFinished = true;
 
         emit MintFinished();
@@ -131,22 +131,6 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
         _transferEnabled = true;
 
         emit TransferEnabled();
-    }
-
-    /**
-     * @dev remove the `operator` role from address
-     * @param account Address you want to remove role
-     */
-    function removeOperator(address account) public onlyOwner {
-        _removeOperator(account);
-    }
-
-    /**
-     * @dev remove the `minter` role from address
-     * @param account Address you want to remove role
-     */
-    function removeMinter(address account) public onlyOwner {
-        _removeMinter(account);
     }
 
     /**

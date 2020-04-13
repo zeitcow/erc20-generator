@@ -1,4 +1,33 @@
 
+// File: @openzeppelin/contracts/GSN/Context.sol
+
+pragma solidity ^0.6.0;
+
+/*
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with GSN meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+contract Context {
+    // Empty internal constructor, to prevent people from mistakenly deploying
+    // an instance of this contract, which should be used via inheritance.
+    constructor () internal { }
+
+    function _msgSender() internal view virtual returns (address payable) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes memory) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        return msg.data;
+    }
+}
+
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
 pragma solidity ^0.6.0;
@@ -78,91 +107,6 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: @openzeppelin/contracts/token/ERC20/ERC20Detailed.sol
-
-pragma solidity ^0.6.0;
-
-
-/**
- * @dev Optional functions from the ERC20 standard.
- */
-abstract contract ERC20Detailed is IERC20 {
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
-
-    /**
-     * @dev Sets the values for `name`, `symbol`, and `decimals`. All three of
-     * these values are immutable: they can only be set once during
-     * construction.
-     */
-    constructor (string memory name, string memory symbol, uint8 decimals) public {
-        _name = name;
-        _symbol = symbol;
-        _decimals = decimals;
-    }
-
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() public view returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
-     * name.
-     */
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
-
-    /**
-     * @dev Returns the number of decimals used to get its user representation.
-     * For example, if `decimals` equals `2`, a balance of `505` tokens should
-     * be displayed to a user as `5,05` (`505 / 10 ** 2`).
-     *
-     * Tokens usually opt for a value of 18, imitating the relationship between
-     * Ether and Wei.
-     *
-     * NOTE: This information is only used for _display_ purposes: it in
-     * no way affects any of the arithmetic of the contract, including
-     * {IERC20-balanceOf} and {IERC20-transfer}.
-     */
-    function decimals() public view returns (uint8) {
-        return _decimals;
-    }
-}
-
-// File: @openzeppelin/contracts/GSN/Context.sol
-
-pragma solidity ^0.6.0;
-
-/*
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with GSN meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-contract Context {
-    // Empty internal constructor, to prevent people from mistakenly deploying
-    // an instance of this contract, which should be used via inheritance.
-    constructor () internal { }
-
-    function _msgSender() internal view virtual returns (address payable) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes memory) {
-        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
-        return msg.data;
-    }
-}
-
 // File: @openzeppelin/contracts/math/SafeMath.sol
 
 pragma solidity ^0.6.0;
@@ -218,8 +162,6 @@ library SafeMath {
      *
      * Requirements:
      * - Subtraction cannot overflow.
-     *
-     * _Available since v2.4.0._
      */
     function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b <= a, errorMessage);
@@ -276,8 +218,6 @@ library SafeMath {
      *
      * Requirements:
      * - The divisor cannot be zero.
-     *
-     * _Available since v2.4.0._
      */
     function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         // Solidity only automatically asserts when dividing by 0
@@ -313,8 +253,6 @@ library SafeMath {
      *
      * Requirements:
      * - The divisor cannot be zero.
-     *
-     * _Available since v2.4.0._
      */
     function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b != 0, errorMessage);
@@ -322,9 +260,71 @@ library SafeMath {
     }
 }
 
+// File: @openzeppelin/contracts/utils/Address.sol
+
+pragma solidity ^0.6.0;
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * [IMPORTANT]
+     * ====
+     * It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     *
+     * Among others, `isContract` will return false for the following
+     * types of addresses:
+     *
+     *  - an externally-owned account
+     *  - a contract in construction
+     *  - an address where a contract will be created
+     *  - an address where a contract lived, but was destroyed
+     * ====
+     */
+    function isContract(address account) internal view returns (bool) {
+        // According to EIP-1052, 0x0 is the value returned for not-yet created accounts
+        // and 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 is returned
+        // for accounts without code, i.e. `keccak256('')`
+        bytes32 codehash;
+        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+        // solhint-disable-next-line no-inline-assembly
+        assembly { codehash := extcodehash(account) }
+        return (codehash != accountHash && codehash != 0x0);
+    }
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = recipient.call.value(amount)("");
+        require(success, "Address: unable to send value, recipient may have reverted");
+    }
+}
+
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 
 pragma solidity ^0.6.0;
+
 
 
 
@@ -355,12 +355,64 @@ pragma solidity ^0.6.0;
  */
 contract ERC20 is Context, IERC20 {
     using SafeMath for uint256;
+    using Address for address;
 
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
+
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+
+    /**
+     * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
+     * a default value of 18.
+     *
+     * To select a different value for {decimals}, use {_setupDecimals}.
+     *
+     * All three of these values are immutable: they can only be set once during
+     * construction.
+     */
+    constructor (string memory name, string memory symbol) public {
+        _name = name;
+        _symbol = symbol;
+        _decimals = 18;
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5,05` (`505 / 10 ** 2`).
+     *
+     * Tokens usually opt for a value of 18, imitating the relationship between
+     * Ether and Wei. This is the value {ERC20} uses, unless {_setupDecimals} is
+     * called.
+     *
+     * NOTE: This information is only used for _display_ purposes: it in
+     * no way affects any of the arithmetic of the contract, including
+     * {IERC20-balanceOf} and {IERC20-transfer}.
+     */
+    function decimals() public view returns (uint8) {
+        return _decimals;
+    }
 
     /**
      * @dev See {IERC20-totalSupply}.
@@ -549,14 +601,15 @@ contract ERC20 is Context, IERC20 {
     }
 
     /**
-     * @dev Destroys `amount` tokens from `account`.`amount` is then deducted
-     * from the caller's allowance.
+     * @dev Sets {decimals} to a value other than the default one of 18.
      *
-     * See {_burn} and {_approve}.
+     * Requirements:
+     *
+     * - this function can only be called from a constructor.
      */
-    function _burnFrom(address account, uint256 amount) internal virtual {
-        _burn(account, amount);
-        _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "ERC20: burn amount exceeds allowance"));
+    function _setupDecimals(uint8 decimals_) internal {
+        require(!address(this).isContract(), "ERC20: decimals cannot be changed after construction");
+        _decimals = decimals_;
     }
 
     /**
@@ -584,7 +637,7 @@ pragma solidity ^0.6.0;
 /**
  * @dev Extension of {ERC20} that adds a cap to the supply of tokens.
  */
-contract ERC20Capped is ERC20 {
+abstract contract ERC20Capped is ERC20 {
     uint256 private _cap;
 
     /**
@@ -630,7 +683,7 @@ pragma solidity ^0.6.0;
  * tokens and those that they have an allowance for, in a way that can be
  * recognized off-chain (via event analysis).
  */
-contract ERC20Burnable is Context, ERC20 {
+abstract contract ERC20Burnable is Context, ERC20 {
     /**
      * @dev Destroys `amount` tokens from the caller.
      *
@@ -641,83 +694,21 @@ contract ERC20Burnable is Context, ERC20 {
     }
 
     /**
-     * @dev See {ERC20-_burnFrom}.
+     * @dev Destroys `amount` tokens from `account`, deducting from the caller's
+     * allowance.
+     *
+     * See {ERC20-_burn} and {ERC20-allowance}.
+     *
+     * Requirements:
+     *
+     * - the caller must have allowance for `accounts`'s tokens of at least
+     * `amount`.
      */
     function burnFrom(address account, uint256 amount) public virtual {
-        _burnFrom(account, amount);
-    }
-}
+        uint256 decreasedAllowance = allowance(account, _msgSender()).sub(amount, "ERC20: burn amount exceeds allowance");
 
-// File: @openzeppelin/contracts/utils/Address.sol
-
-pragma solidity ^0.6.0;
-
-/**
- * @dev Collection of functions related to the address type
- */
-library Address {
-    /**
-     * @dev Returns true if `account` is a contract.
-     *
-     * [IMPORTANT]
-     * ====
-     * It is unsafe to assume that an address for which this function returns
-     * false is an externally-owned account (EOA) and not a contract.
-     *
-     * Among others, `isContract` will return false for the following
-     * types of addresses:
-     *
-     *  - an externally-owned account
-     *  - a contract in construction
-     *  - an address where a contract will be created
-     *  - an address where a contract lived, but was destroyed
-     * ====
-     */
-    function isContract(address account) internal view returns (bool) {
-        // According to EIP-1052, 0x0 is the value returned for not-yet created accounts
-        // and 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 is returned
-        // for accounts without code, i.e. `keccak256('')`
-        bytes32 codehash;
-        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
-        // solhint-disable-next-line no-inline-assembly
-        assembly { codehash := extcodehash(account) }
-        return (codehash != accountHash && codehash != 0x0);
-    }
-
-    /**
-     * @dev Converts an `address` into `address payable`. Note that this is
-     * simply a type cast: the actual underlying value is not changed.
-     *
-     * _Available since v2.4.0._
-     */
-    function toPayable(address account) internal pure returns (address payable) {
-        return address(uint160(account));
-    }
-
-    /**
-     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
-     * `recipient`, forwarding all available gas and reverting on errors.
-     *
-     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
-     * of certain opcodes, possibly making contracts go over the 2300 gas limit
-     * imposed by `transfer`, making them unable to receive funds via
-     * `transfer`. {sendValue} removes this limitation.
-     *
-     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
-     *
-     * IMPORTANT: because control is transferred to `recipient`, care must be
-     * taken to not create reentrancy vulnerabilities. Consider using
-     * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
-     *
-     * _Available since v2.4.0._
-     */
-    function sendValue(address payable recipient, uint256 amount) internal {
-        require(address(this).balance >= amount, "Address: insufficient balance");
-
-        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call.value(amount)("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+        _approve(account, _msgSender(), decreasedAllowance);
+        _burn(account, amount);
     }
 }
 
@@ -744,7 +735,7 @@ library ERC165Checker {
     /**
      * @dev Returns true if `account` supports the {IERC165} interface,
      */
-    function _supportsERC165(address account) internal view returns (bool) {
+    function supportsERC165(address account) internal view returns (bool) {
         // Any contract that implements ERC165 must explicitly indicate support of
         // InterfaceId_ERC165 and explicitly indicate non-support of InterfaceId_Invalid
         return _supportsERC165Interface(account, _INTERFACE_ID_ERC165) &&
@@ -757,9 +748,9 @@ library ERC165Checker {
      *
      * See {IERC165-supportsInterface}.
      */
-    function _supportsInterface(address account, bytes4 interfaceId) internal view returns (bool) {
+    function supportsInterface(address account, bytes4 interfaceId) internal view returns (bool) {
         // query support of both ERC165 as per the spec and support of _interfaceId
-        return _supportsERC165(account) &&
+        return supportsERC165(account) &&
             _supportsERC165Interface(account, interfaceId);
     }
 
@@ -772,9 +763,9 @@ library ERC165Checker {
      *
      * See {IERC165-supportsInterface}.
      */
-    function _supportsAllInterfaces(address account, bytes4[] memory interfaceIds) internal view returns (bool) {
+    function supportsAllInterfaces(address account, bytes4[] memory interfaceIds) internal view returns (bool) {
         // query support of ERC165 itself
-        if (!_supportsERC165(account)) {
+        if (!supportsERC165(account)) {
             return false;
         }
 
@@ -797,7 +788,7 @@ library ERC165Checker {
      * identifier interfaceId, false otherwise
      * @dev Assumes that account contains a contract that supports ERC165, otherwise
      * the behavior of this method is undefined. This precondition can be checked
-     * with the `supportsERC165` method in this library.
+     * with {supportsERC165}.
      * Interface identification is specified in ERC-165.
      */
     function _supportsERC165Interface(address account, bytes4 interfaceId) private view returns (bool) {
@@ -886,7 +877,7 @@ contract ERC165 is IERC165 {
      *
      * Time complexity O(1), guaranteed to always use less than 30 000 gas.
      */
-    function supportsInterface(bytes4 interfaceId) external view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return _supportedInterfaces[interfaceId];
     }
 
@@ -1111,7 +1102,10 @@ contract ERC1363 is ERC20, IERC1363, ERC165 {
     // which can be also obtained as `IERC1363Spender(0).onApprovalReceived.selector`
     bytes4 private constant _ERC1363_APPROVED = 0x7b04a2d0;
 
-    constructor() public {
+    constructor (
+        string memory name,
+        string memory symbol
+    ) public payable ERC20(name, symbol) {
         // register the supported interfaces to conform to ERC1363 via ERC165
         _registerInterface(_INTERFACE_ID_ERC1363_TRANSFER);
         _registerInterface(_INTERFACE_ID_ERC1363_APPROVE);
@@ -1185,7 +1179,7 @@ contract ERC1363 is ERC20, IERC1363, ERC165 {
     }
 }
 
-// File: @openzeppelin/contracts/ownership/Ownable.sol
+// File: @openzeppelin/contracts/access/Ownable.sol
 
 pragma solidity ^0.6.0;
 
@@ -1193,6 +1187,9 @@ pragma solidity ^0.6.0;
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
  * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
  *
  * This module is used through inheritance. It will make available the modifier
  * `onlyOwner`, which can be applied to your functions to restrict their use to
@@ -1223,15 +1220,8 @@ contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
+        require(_owner == _msgSender(), "Ownable: caller is not the owner");
         _;
-    }
-
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
-    function isOwner() public view returns (bool) {
-        return _msgSender() == _owner;
     }
 
     /**
@@ -1251,13 +1241,6 @@ contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     */
-    function _transferOwnership(address newOwner) internal virtual {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
@@ -1287,142 +1270,469 @@ contract TokenRecover is Ownable {
     }
 }
 
-// File: @openzeppelin/contracts/access/Roles.sol
+// File: @openzeppelin/contracts/utils/EnumerableSet.sol
 
 pragma solidity ^0.6.0;
 
 /**
- * @title Roles
- * @dev Library for managing addresses assigned to a Role.
+ * @dev Library for managing
+ * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive
+ * types.
+ *
+ * Sets have the following properties:
+ *
+ * - Elements are added, removed, and checked for existence in constant time
+ * (O(1)).
+ * - Elements are enumerated in O(n). No guarantees are made on the ordering.
+ *
+ * As of v2.5.0, only `address` sets are supported.
+ *
+ * Include with `using EnumerableSet for EnumerableSet.AddressSet;`.
+ *
+ * @author Alberto Cuesta Cañada
  */
-library Roles {
-    struct Role {
-        mapping (address => bool) bearer;
+library EnumerableSet {
+    // To implement this library for multiple types with as little code
+    // repetition as possible, we write it in terms of a generic Set type with
+    // bytes32 values.
+    // The Set implementation uses private functions, and user-facing
+    // implementations (such as AddressSet) are just wrappers around the
+    // underlying Set.
+    // This means that we can only create new EnumerableSets for types that fit
+    // in bytes32.
+
+    struct Set {
+        // Storage of set values
+        bytes32[] _values;
+
+        // Position of the value in the `values` array, plus 1 because index 0
+        // means a value is not in the set.
+        mapping (bytes32 => uint256) _indexes;
     }
 
     /**
-     * @dev Give an account access to this role.
+     * @dev Add a value to a set. O(1).
+     *
+     * Returns true if the value was added to the set, that is if it was not
+     * already present.
      */
-    function add(Role storage role, address account) internal {
-        require(!has(role, account), "Roles: account already has role");
-        role.bearer[account] = true;
+    function _add(Set storage set, bytes32 value) private returns (bool) {
+        if (!_contains(set, value)) {
+            set._values.push(value);
+            // The value is stored at length-1, but we add 1 to all indexes
+            // and use 0 as a sentinel value
+            set._indexes[value] = set._values.length;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
-     * @dev Remove an account's access to this role.
+     * @dev Removes a value from a set. O(1).
+     *
+     * Returns true if the value was removed from the set, that is if it was
+     * present.
      */
-    function remove(Role storage role, address account) internal {
-        require(has(role, account), "Roles: account does not have role");
-        role.bearer[account] = false;
+    function _remove(Set storage set, bytes32 value) private returns (bool) {
+        // We read and store the value's index to prevent multiple reads from the same storage slot
+        uint256 valueIndex = set._indexes[value];
+
+        if (valueIndex != 0) { // Equivalent to contains(set, value)
+            // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
+            // the array, and then remove the last element (sometimes called as 'swap and pop').
+            // This modifies the order of the array, as noted in {at}.
+
+            uint256 toDeleteIndex = valueIndex - 1;
+            uint256 lastIndex = set._values.length - 1;
+
+            // When the value to delete is the last one, the swap operation is unnecessary. However, since this occurs
+            // so rarely, we still do the swap anyway to avoid the gas cost of adding an 'if' statement.
+
+            bytes32 lastvalue = set._values[lastIndex];
+
+            // Move the last value to the index where the value to delete is
+            set._values[toDeleteIndex] = lastvalue;
+            // Update the index for the moved value
+            set._indexes[lastvalue] = toDeleteIndex + 1; // All indexes are 1-based
+
+            // Delete the slot where the moved value was stored
+            set._values.pop();
+
+            // Delete the index for the deleted slot
+            delete set._indexes[value];
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
-     * @dev Check if an account has this role.
-     * @return bool
+     * @dev Returns true if the value is in the set. O(1).
      */
-    function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0), "Roles: account is the zero address");
-        return role.bearer[account];
+    function _contains(Set storage set, bytes32 value) private view returns (bool) {
+        return set._indexes[value] != 0;
+    }
+
+    /**
+     * @dev Returns the number of values on the set. O(1).
+     */
+    function _length(Set storage set) private view returns (uint256) {
+        return set._values.length;
+    }
+
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
+    function _at(Set storage set, uint256 index) private view returns (bytes32) {
+        require(set._values.length > index, "EnumerableSet: index out of bounds");
+        return set._values[index];
+    }
+
+    // AddressSet
+
+    struct AddressSet {
+        Set _inner;
+    }
+
+    /**
+     * @dev Add a value to a set. O(1).
+     *
+     * Returns true if the value was added to the set, that is if it was not
+     * already present.
+     */
+    function add(AddressSet storage set, address value) internal returns (bool) {
+        return _add(set._inner, bytes32(uint256(value)));
+    }
+
+    /**
+     * @dev Removes a value from a set. O(1).
+     *
+     * Returns true if the value was removed from the set, that is if it was
+     * present.
+     */
+    function remove(AddressSet storage set, address value) internal returns (bool) {
+        return _remove(set._inner, bytes32(uint256(value)));
+    }
+
+    /**
+     * @dev Returns true if the value is in the set. O(1).
+     */
+    function contains(AddressSet storage set, address value) internal view returns (bool) {
+        return _contains(set._inner, bytes32(uint256(value)));
+    }
+
+    /**
+     * @dev Returns the number of values in the set. O(1).
+     */
+    function length(AddressSet storage set) internal view returns (uint256) {
+        return _length(set._inner);
+    }
+
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
+    function at(AddressSet storage set, uint256 index) internal view returns (address) {
+        return address(uint256(_at(set._inner, index)));
+    }
+
+
+    // UintSet
+
+    struct UintSet {
+        Set _inner;
+    }
+
+    /**
+     * @dev Add a value to a set. O(1).
+     *
+     * Returns true if the value was added to the set, that is if it was not
+     * already present.
+     */
+    function add(UintSet storage set, uint256 value) internal returns (bool) {
+        return _add(set._inner, bytes32(value));
+    }
+
+    /**
+     * @dev Removes a value from a set. O(1).
+     *
+     * Returns true if the value was removed from the set, that is if it was
+     * present.
+     */
+    function remove(UintSet storage set, uint256 value) internal returns (bool) {
+        return _remove(set._inner, bytes32(value));
+    }
+
+    /**
+     * @dev Returns true if the value is in the set. O(1).
+     */
+    function contains(UintSet storage set, uint256 value) internal view returns (bool) {
+        return _contains(set._inner, bytes32(value));
+    }
+
+    /**
+     * @dev Returns the number of values on the set. O(1).
+     */
+    function length(UintSet storage set) internal view returns (uint256) {
+        return _length(set._inner);
+    }
+
+   /**
+    * @dev Returns the value stored at position `index` in the set. O(1).
+    *
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
+    function at(UintSet storage set, uint256 index) internal view returns (uint256) {
+        return uint256(_at(set._inner, index));
     }
 }
 
-// File: contracts/access/roles/MinterRole.sol
+// File: @openzeppelin/contracts/access/AccessControl.sol
 
-pragma solidity ^0.6.6;
+pragma solidity ^0.6.0;
 
 
 
-contract MinterRole is Context {
-    using Roles for Roles.Role;
 
-    event MinterAdded(address indexed account);
-    event MinterRemoved(address indexed account);
+/**
+ * @dev Contract module that allows children to implement role-based access
+ * control mechanisms.
+ *
+ * Roles are referred to by their `bytes32` identifier. These should be exposed
+ * in the external API and be unique. The best way to achieve this is by
+ * using `public constant` hash digests:
+ *
+ * ```
+ * bytes32 public constant MY_ROLE = keccak256("MY_ROLE");
+ * ```
+ *
+ * Roles can be used to represent a set of permissions. To restrict access to a
+ * function call, use {hasRole}:
+ *
+ * ```
+ * function foo() public {
+ *     require(hasRole(MY_ROLE, _msgSender()));
+ *     ...
+ * }
+ * ```
+ *
+ * Roles can be granted and revoked dynamically via the {grantRole} and
+ * {revokeRole} functions. Each role has an associated admin role, and only
+ * accounts that have a role's admin role can call {grantRole} and {revokeRoke}.
+ *
+ * By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means
+ * that only accounts with this role will be able to grant or revoke other
+ * roles. More complex role relationships can be created by using
+ * {_setRoleAdmin}.
+ */
+abstract contract AccessControl is Context {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using Address for address;
 
-    Roles.Role private _minters;
+    struct RoleData {
+        EnumerableSet.AddressSet members;
+        bytes32 adminRole;
+    }
 
-    constructor () internal {
-        _addMinter(_msgSender());
+    mapping (bytes32 => RoleData) private _roles;
+
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
+    /**
+     * @dev Emitted when `account` is granted `role`.
+     *
+     * `sender` is the account that originated the contract call, an admin role
+     * bearer except when using {_setupRole}.
+     */
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Emitted when `account` is revoked `role`.
+     *
+     * `sender` is the account that originated the contract call:
+     *   - if using `revokeRole`, it is the admin role bearer
+     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
+     */
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /**
+     * @dev Returns `true` if `account` has been granted `role`.
+     */
+    function hasRole(bytes32 role, address account) public view returns (bool) {
+        return _roles[role].members.contains(account);
+    }
+
+    /**
+     * @dev Returns the number of accounts that have `role`. Can be used
+     * together with {getRoleMember} to enumerate all bearers of a role.
+     */
+    function getRoleMemberCount(bytes32 role) public view returns (uint256) {
+        return _roles[role].members.length();
+    }
+
+    /**
+     * @dev Returns one of the accounts that have `role`. `index` must be a
+     * value between 0 and {getRoleMemberCount}, non-inclusive.
+     *
+     * Role bearers are not sorted in any particular way, and their ordering may
+     * change at any point.
+     *
+     * WARNING: When using {getRoleMember} and {getRoleMemberCount}, make sure
+     * you perform all queries on the same block. See the following
+     * https://forum.openzeppelin.com/t/iterating-over-elements-on-enumerableset-in-openzeppelin-contracts/2296[forum post]
+     * for more information.
+     */
+    function getRoleMember(bytes32 role, uint256 index) public view returns (address) {
+        return _roles[role].members.at(index);
+    }
+
+    /**
+     * @dev Returns the admin role that controls `role`. See {grantRole} and
+     * {revokeRole}.
+     *
+     * To change a role's admin, use {_setRoleAdmin}.
+     */
+    function getRoleAdmin(bytes32 role) public view returns (bytes32) {
+        return _roles[role].adminRole;
+    }
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have `role`'s admin role.
+     */
+    function grantRole(bytes32 role, address account) public virtual {
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to grant");
+
+        _grantRole(role, account);
+    }
+
+    /**
+     * @dev Revokes `role` from `account`.
+     *
+     * If `account` had been granted `role`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have `role`'s admin role.
+     */
+    function revokeRole(bytes32 role, address account) public virtual {
+        require(hasRole(_roles[role].adminRole, _msgSender()), "AccessControl: sender must be an admin to revoke");
+
+        _revokeRole(role, account);
+    }
+
+    /**
+     * @dev Revokes `role` from the calling account.
+     *
+     * Roles are often managed via {grantRole} and {revokeRole}: this function's
+     * purpose is to provide a mechanism for accounts to lose their privileges
+     * if they are compromised (such as when a trusted device is misplaced).
+     *
+     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must be `account`.
+     */
+    function renounceRole(bytes32 role, address account) public virtual {
+        require(account == _msgSender(), "AccessControl: can only renounce roles for self");
+
+        _revokeRole(role, account);
+    }
+
+    /**
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event. Note that unlike {grantRole}, this function doesn't perform any
+     * checks on the calling account.
+     *
+     * Requirements:
+     *
+     * - this function can only be called from a constructor.
+     */
+    function _setupRole(bytes32 role, address account) internal virtual {
+        require(!address(this).isContract(), "AccessControl: roles cannot be setup after construction");
+        _grantRole(role, account);
+    }
+
+    /**
+     * @dev Sets `adminRole` as `role`'s admin role.
+     */
+    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {
+        _roles[role].adminRole = adminRole;
+    }
+
+    function _grantRole(bytes32 role, address account) private {
+        if (_roles[role].members.add(account)) {
+            emit RoleGranted(role, account, _msgSender());
+        }
+    }
+
+    function _revokeRole(bytes32 role, address account) private {
+        if (_roles[role].members.remove(account)) {
+            emit RoleRevoked(role, account, _msgSender());
+        }
+    }
+}
+
+// File: contracts/access/Roles.sol
+
+pragma solidity ^0.6.0;
+
+
+contract Roles is AccessControl {
+
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
+
+    constructor () public {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(MINTER_ROLE, _msgSender());
+        _setupRole(OPERATOR_ROLE, _msgSender());
     }
 
     modifier onlyMinter() {
-        require(isMinter(_msgSender()), "MinterRole: caller does not have the Minter role");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Roles: caller does not have the MINTER role");
         _;
-    }
-
-    function isMinter(address account) public view returns (bool) {
-        return _minters.has(account);
-    }
-
-    function addMinter(address account) public onlyMinter {
-        _addMinter(account);
-    }
-
-    function renounceMinter() public {
-        _removeMinter(_msgSender());
-    }
-
-    function _addMinter(address account) internal {
-        _minters.add(account);
-        emit MinterAdded(account);
-    }
-
-    function _removeMinter(address account) internal {
-        _minters.remove(account);
-        emit MinterRemoved(account);
-    }
-}
-
-// File: contracts/access/roles/OperatorRole.sol
-
-pragma solidity ^0.6.6;
-
-
-
-contract OperatorRole is Context {
-    using Roles for Roles.Role;
-
-    event OperatorAdded(address indexed account);
-    event OperatorRemoved(address indexed account);
-
-    Roles.Role private _operators;
-
-    constructor() internal {
-        _addOperator(_msgSender());
     }
 
     modifier onlyOperator() {
-        require(isOperator(_msgSender()));
+        require(hasRole(OPERATOR_ROLE, _msgSender()), "Roles: caller does not have the OPERATOR role");
         _;
-    }
-
-    function isOperator(address account) public view returns (bool) {
-        return _operators.has(account);
-    }
-
-    function addOperator(address account) public onlyOperator {
-        _addOperator(account);
-    }
-
-    function renounceOperator() public {
-        _removeOperator(_msgSender());
-    }
-
-    function _addOperator(address account) internal {
-        _operators.add(account);
-        emit OperatorAdded(account);
-    }
-
-    function _removeOperator(address account) internal {
-        _operators.remove(account);
-        emit OperatorRemoved(account);
     }
 }
 
 // File: contracts/BaseToken.sol
 
-pragma solidity ^0.6.6;
-
-
+pragma solidity ^0.6.0;
 
 
 
@@ -1434,7 +1744,7 @@ pragma solidity ^0.6.6;
  * @author Vittorio Minacori (https://github.com/vittominacori)
  * @dev Implementation of the BaseToken
  */
-contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, MinterRole, OperatorRole, TokenRecover {
+contract BaseToken is ERC20Capped, ERC20Burnable, ERC1363, Roles, TokenRecover {
 
     event MintFinished();
     event TransferEnabled();
@@ -1459,7 +1769,7 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @dev Tokens can be moved only after if transfer enabled or if you are an approved operator.
      */
     modifier canTransfer(address from) {
-        require(_transferEnabled || isOperator(from));
+        require(_transferEnabled || hasRole(OPERATOR_ROLE, from));
         _;
     }
 
@@ -1480,9 +1790,11 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
         bool transferEnabled
     )
         public
-        ERC20Detailed(name, symbol, decimals)
         ERC20Capped(cap)
+        ERC1363(name, symbol)
     {
+        _setupDecimals(decimals);
+
         if (initialSupply > 0) {
             _mint(owner(), initialSupply);
         }
@@ -1521,7 +1833,7 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @param value The amount to be transferred.
      * @return A boolean that indicates if the operation was successful.
      */
-    function transfer(address to, uint256 value) public virtual override(ERC20, IERC20) canTransfer(_msgSender()) returns (bool) {
+    function transfer(address to, uint256 value) public virtual override(ERC20) canTransfer(_msgSender()) returns (bool) {
         return super.transfer(to, value);
     }
 
@@ -1532,14 +1844,14 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
      * @param value uint256 the amount of tokens to be transferred
      * @return A boolean that indicates if the operation was successful.
      */
-    function transferFrom(address from, address to, uint256 value) public virtual override(ERC20, IERC20) canTransfer(from) returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public virtual override(ERC20) canTransfer(from) returns (bool) {
         return super.transferFrom(from, to, value);
     }
 
     /**
      * @dev Function to stop minting new tokens.
      */
-    function finishMinting() public onlyOwner canMint {
+    function finishMinting() public canMint onlyOwner {
         _mintingFinished = true;
 
         emit MintFinished();
@@ -1552,22 +1864,6 @@ contract BaseToken is ERC20Detailed, ERC20Capped, ERC20Burnable, ERC1363, Minter
         _transferEnabled = true;
 
         emit TransferEnabled();
-    }
-
-    /**
-     * @dev remove the `operator` role from address
-     * @param account Address you want to remove role
-     */
-    function removeOperator(address account) public onlyOwner {
-        _removeOperator(account);
-    }
-
-    /**
-     * @dev remove the `minter` role from address
-     * @param account Address you want to remove role
-     */
-    function removeMinter(address account) public onlyOwner {
-        _removeMinter(account);
     }
 
     /**

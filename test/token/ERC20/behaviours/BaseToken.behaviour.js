@@ -5,22 +5,23 @@ const { shouldBehaveLikeTokenRecover } = require('eth-token-recover/test/TokenRe
 const { shouldBehaveLikeERC1363 } = require('erc-payable-token/test/token/ERC1363/ERC1363.behaviour');
 
 const { shouldBehaveLikeERC20 } = require('./ERC20.behaviour');
-const { shouldBehaveLikeERC20Detailed } = require('./ERC20Detailed.behaviour');
 const { shouldBehaveLikeERC20Capped } = require('./ERC20Capped.behaviour');
 const { shouldBehaveLikeERC20Burnable } = require('./ERC20Burnable.behaviour');
-const { shouldBehaveLikeRemoveRole } = require('../../../access/roles/RemoveRole.behavior');
 
 function shouldBehaveLikeBaseToken (
   [owner, anotherAccount, minter, operator, recipient, thirdParty],
   [_name, _symbol, _decimals, _cap, _initialSupply],
 ) {
-  context('like a ERC20Detailed', function () {
-    shouldBehaveLikeERC20Detailed(_name, _symbol, _decimals);
+  context('like a ERC20', function () {
+    beforeEach(async function () {
+      await this.token.grantRole((await this.token.MINTER_ROLE()), minter, { from: owner });
+    });
+    shouldBehaveLikeERC20(_name, _symbol, _decimals, [owner, anotherAccount, recipient], _initialSupply);
   });
 
   context('like a ERC20Capped', function () {
     beforeEach(async function () {
-      await this.token.addMinter(minter, { from: owner });
+      await this.token.grantRole((await this.token.MINTER_ROLE()), minter, { from: owner });
 
       // NOTE: burning initial supply to test cap
       await this.token.burn(_initialSupply, { from: owner });
@@ -32,21 +33,14 @@ function shouldBehaveLikeBaseToken (
     shouldBehaveLikeERC20Burnable(owner, _initialSupply, [owner]);
   });
 
-  context('like a ERC20', function () {
-    beforeEach(async function () {
-      await this.token.addMinter(minter, { from: owner });
-    });
-    shouldBehaveLikeERC20([owner, anotherAccount, recipient], _initialSupply);
-  });
-
   context('like a ERC1363', function () {
     shouldBehaveLikeERC1363([owner, anotherAccount, recipient], _initialSupply);
   });
 
   context('BaseToken token behaviours', function () {
     beforeEach(async function () {
-      await this.token.addMinter(minter, { from: owner });
-      await this.token.addOperator(operator, { from: owner });
+      await this.token.grantRole((await this.token.MINTER_ROLE()), minter, { from: owner });
+      await this.token.grantRole((await this.token.OPERATOR_ROLE()), operator, { from: owner });
     });
 
     context('as a mintable token', function () {
@@ -122,7 +116,7 @@ function shouldBehaveLikeBaseToken (
 
         describe('if it is an operator', function () {
           beforeEach(async function () {
-            await this.token.addOperator(thirdParty, { from: owner });
+            await this.token.grantRole((await this.token.OPERATOR_ROLE()), thirdParty, { from: owner });
           });
 
           it('should transfer', async function () {
@@ -162,7 +156,7 @@ function shouldBehaveLikeBaseToken (
 
         describe('if it is an operator', function () {
           beforeEach(async function () {
-            await this.token.addOperator(thirdParty, { from: owner });
+            await this.token.grantRole((await this.token.OPERATOR_ROLE()), thirdParty, { from: owner });
           });
 
           it('should transfer', async function () {
@@ -192,20 +186,6 @@ function shouldBehaveLikeBaseToken (
 
       it('shouldn\'t mint more tokens', async function () {
         await expectRevert.unspecified(this.token.mint(thirdParty, 1, { from: minter }));
-      });
-    });
-
-    context('testing remove roles', function () {
-      beforeEach(async function () {
-        this.contract = this.token;
-      });
-
-      describe('operator', function () {
-        shouldBehaveLikeRemoveRole(owner, operator, [thirdParty], 'operator');
-      });
-
-      describe('minter', function () {
-        shouldBehaveLikeRemoveRole(owner, minter, [thirdParty], 'minter');
       });
     });
 

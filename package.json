@@ -72,7 +72,8 @@
     "web3": "^1.2.6"
   },
   "dependencies": {
-    "erc-payable-token": "vittominacori/erc1363-payable-token#next",
-    "eth-token-recover": "vittominacori/eth-token-recover#next"
+    "@openzeppelin/contracts": "3.0.0-rc.1",
+    "erc-payable-token": "github:vittominacori/erc1363-payable-token#next",
+    "eth-token-recover": "github:vittominacori/eth-token-recover#next"
   }
 }
